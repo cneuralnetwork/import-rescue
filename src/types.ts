@@ -18,6 +18,8 @@ export type Plan = {
 export type Row = {
   number: number;
   sourceLine: number;
+  originalCells: string[];
+  malformed: boolean;
   segment: number;
   raw: Record<string, string>;
   value: Record<string, string | number | null>;

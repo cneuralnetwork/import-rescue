@@ -51,3 +51,9 @@ The [neatHack build guide](https://neatlogs.com/hackathon) and [Entire event gui
 Trails, Graph/Brain, and Crustdata were not used. No judging scores, eligibility, prizes, or deadline claims are invented.
 
 Dependency check on 11 October: `npm audit` reports **0 high / 0 critical and 12 moderate** advisories in the neatlogs OpenTelemetry dependency chain. Compatible protobuf/Jaeger overrides removed the high-severity advisories. Forcing OpenTelemetry core v2 broke the SDK doctor, so that incompatible override was removed. Hosted spans were rechecked after restoring SDK compatibility. The remaining upstream advisories are not claimed as fixed.
+
+The private repository was pushed and GitHub Actions was started. The unpublished bootstrap commit's attribution was corrected to cneuralnetwork before its first push. A fresh local Entire checkpoint was captured with that same identity: `01M4KHE1JKEKED094S42AE3HYC`. It remains imported, read-only, and local because Entire is not signed in. No older session metadata was pushed. The browser login is ready for the user to accept Entire's terms and connect the requested repository.
+
+Final polish also resets mapping-form state when switching runs and exposes surplus original cells when inspecting malformed rows. All source cells remain available in exported JSON receipts.
+
+Final receipt fixes passed all 11 tests and the production build. GitHub sign-in confirms cneuralnetwork; Entire account authorization is pending review. No hosted checkpoint is claimed.

@@ -1202,7 +1202,18 @@ export default function App() {
                 </div>
                 <details className="raw-details">
                   <summary>View original source record</summary>
-                  <pre>{JSON.stringify(selectedRow.raw, null, 2)}</pre>
+                  <pre>
+                    {JSON.stringify(
+                      selectedRow.malformed
+                        ? {
+                            columns: selectedRow.raw,
+                            originalCells: selectedRow.originalCells,
+                          }
+                        : selectedRow.raw,
+                      null,
+                      2,
+                    )}
+                  </pre>
                 </details>
                 {selectedRow.status === "Unresolved" && (
                   <button
@@ -1260,7 +1271,7 @@ function Mapping({ run, busy, act }: { run: Run; busy: string; act: Act }) {
           </div>
           {plan.rules.map((rule) => (
             <MappingRule
-              key={rule.id}
+              key={`${run.id}:${rule.id}`}
               rule={rule}
               plan={plan}
               run={run}
