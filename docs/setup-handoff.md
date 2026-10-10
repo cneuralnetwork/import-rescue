@@ -18,7 +18,7 @@ Paste the working prompt from `docs/business-plan.md`, provide the assumptions, 
 
 ## Model advisor
 
-Add `OPENAI_API_KEY` through the local app's Integrations form or directly in `.env`. Do not put it in Git or a chat message. Set `OPENAI_MODEL` to an available model if needed. Restart the server, inspect an ambiguous scenario, and run **Review current mapping**. Verify the LLM/tool trace in neatlogs before claiming a model-powered demonstration. All proposed mappings still require operator approval and deterministic validation.
+The Sarvam advisor is connected and a live synthetic review has passed. To replace its key, use `SARVAM_API_KEY` through the local app's Integrations form or directly in `.env`. Do not put it in Git or a chat message. Set `SARVAM_MODEL` to an available model if needed. Restart the server, inspect an ambiguous scenario, and run **Review current mapping**. The live ambiguous-units review correctly requested supplier confirmation instead of guessing units. All proposed mappings still require operator approval and deterministic validation.
 
 ## Evidence and sharing
 

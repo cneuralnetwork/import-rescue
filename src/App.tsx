@@ -1750,7 +1750,7 @@ function Integrations({
               aria-label="Credential provider"
             >
               <option value="NEATLOGS_API_KEY">neatlogs project API key</option>
-              <option value="OPENAI_API_KEY">OpenAI API key</option>
+              <option value="SARVAM_API_KEY">Sarvam API key</option>
             </select>
           </label>
           <label>

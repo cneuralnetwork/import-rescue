@@ -58,10 +58,10 @@ Duplicate business keys (order, SKU, date) are held together. Keeping repeats re
 
 ## Integrations and current evidence
 
-- **neatlogs:** Official TypeScript SDK, workflow/tool traces, explicit span success/error status, and an optional wrapped OpenAI client. Hosted workflow/tool delivery was verified. Only operation names, run identifiers, and aggregate counts are emitted by the local workflow wrappers. Raw rows and credentials stay local.
+- **neatlogs:** Official TypeScript SDK, workflow/tool traces, explicit span success/error status, and an Sarvam advisor via the OpenAI-compatible client. Hosted workflow/tool delivery was verified. Only operation names, run identifiers, and aggregate counts are emitted by the local workflow wrappers. Raw rows and credentials stay local.
 - **Entire:** CLI installed and Codex hooks configured. Existing Codex history was imported as read-only local checkpoints. Normal live hook capture needs approval in Codex `/hooks`. Hosted checkpoint access still needs account/repository onboarding and verification.
 - **cfo.ai:** A complete local pricing, costs, revenue, and runway draft is in [docs/business-plan.md](docs/business-plan.md). Creating the actual cfo.ai plan still requires account access. The draft is not represented as cfo.ai output.
-- **OpenAI:** Optional advisor implemented; no model key was available during verification. It proposes mappings using headers only, with operator approval and the same deterministic validation. The default mode is honestly labeled **Local rule engine**.
+- **Sarvam:** Optional advisor uses `sarvam-105b` at `https://api.sarvam.ai/v1`. Configure `SARVAM_API_KEY`; no OpenAI key is required. Live `sarvam-105b` review and hosted neatlogs delivery were verified with synthetic headers. Structured output and local schema validation constrain suggestions; unknown price units remain unresolved. It proposes mappings using headers only, with operator approval and the same deterministic validation. The default mode is honestly labeled **Local rule engine**.
 - **Crustdata:** Optional resource, not used by this one-schema CSV MVP.
 
 Provider keys can be entered in **Integrations → Connect a provider**, which saves them to an owner-only local `.env`. Use a neatlogs **project API key**, not an HTTP ingest key. The optional URLs in `.env.example` are evidence links, not credentials. A configured key is not proof of successful hosted delivery.

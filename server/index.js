@@ -76,7 +76,7 @@ app.post(
   mutation(async (req, res) => {
     const { provider, key } = z
       .object({
-        provider: z.enum(["NEATLOGS_API_KEY", "OPENAI_API_KEY"]),
+        provider: z.enum(["NEATLOGS_API_KEY", "SARVAM_API_KEY"]),
         key: z
           .string()
           .min(16)

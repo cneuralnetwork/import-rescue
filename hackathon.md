@@ -57,3 +57,11 @@ The private repository was pushed and GitHub Actions was started. The unpublishe
 Final polish also resets mapping-form state when switching runs and exposes surplus original cells when inspecting malformed rows. All source cells remain available in exported JSON receipts.
 
 Final receipt fixes passed all 11 tests and the production build. GitHub sign-in confirms cneuralnetwork; Entire account authorization is pending review. No hosted checkpoint is claimed.
+
+## Sarvam advisor migration
+
+Switched the optional advisor to Sarvam at the user's request. The compatibility client is pinned to Sarvam's official V1 endpoint and uses sarvam-105b by default. Credentials remain in the owner-only ignored .env. Headers and unresolved mapping targets are the only supplier schema context transmitted; suggestions still need operator approval. No live Sarvam success is claimed until a configured key is tested.
+
+Live Sarvam review verified through the app on the synthetic ambiguous-units fixture. Initial completions exposed truncation and invalid suggestion fields; explicit response budget, disabled reasoning, structured JSON schema, and local suggestion guards fixed the flow. The completed review left both ambiguous records unresolved and required supplier confirmation. Fifteen tests and the production build pass. Keys remain excluded from Git.
+
+The successful hosted neatlogs workflow contains a sarvam-105b LLM span (287 tokens, approximately 1 second) and reports completed=true. Earlier failed responses remain visible for failure-to-fix evidence.
