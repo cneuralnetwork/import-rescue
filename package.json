@@ -1,0 +1,40 @@
+{
+  "name": "import-rescue",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server/index.js",
+    "build": "tsc -b && vite build",
+    "start": "NODE_ENV=production node server/index.js",
+    "test": "node --test tests/*.test.js",
+    "check": "npm test && npm run build"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.2.0",
+    "@fontsource/instrument-sans": "^5.2.0",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "neatlogs": "^1.1.27",
+    "openai": "^6.0.0",
+    "papaparse": "^5.5.3",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitejs/plugin-react": "^5.0.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9"
+  },
+  "overrides": {
+    "protobufjs": "^8.8.0",
+    "@opentelemetry/propagator-jaeger": "^2.12.0"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

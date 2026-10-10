@@ -1,0 +1,5 @@
+order_id,sku,quantity,price_cents,currency,ordered_at
+,A-1182,2,1999,USD,2026-10-08
+PO-4002,A-1190,-2,450,USD,2026-10-08
+PO-4003,A-1191,1,1250,USD,2026-02-30
+PO-4004,A-1192,3,900,USD,2026-10-08

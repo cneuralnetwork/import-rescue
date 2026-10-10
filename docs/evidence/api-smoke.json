@@ -1,0 +1,99 @@
+{
+  "at": "2026-10-10T18:39:03.990Z",
+  "checks": [
+    {
+      "scenario": "schema-drift",
+      "runId": "IR-035794EA",
+      "counts": {
+        "source": 128,
+        "repaired": 119,
+        "unresolved": 6,
+        "quarantined": 3,
+        "staged": 0
+      }
+    },
+    {
+      "scenario": "ambiguous-units",
+      "runId": "IR-0DAC55DB",
+      "counts": {
+        "source": 2,
+        "repaired": 0,
+        "unresolved": 2,
+        "quarantined": 0,
+        "staged": 0
+      }
+    },
+    {
+      "scenario": "duplicates",
+      "runId": "IR-38978093",
+      "counts": {
+        "source": 3,
+        "repaired": 1,
+        "unresolved": 2,
+        "quarantined": 0,
+        "staged": 0
+      }
+    },
+    {
+      "scenario": "invalid-records",
+      "runId": "IR-BBAC55EF",
+      "counts": {
+        "source": 4,
+        "repaired": 1,
+        "unresolved": 0,
+        "quarantined": 3,
+        "staged": 0
+      }
+    },
+    {
+      "scenario": "new-field",
+      "runId": "IR-1646E528",
+      "counts": {
+        "source": 2,
+        "repaired": 0,
+        "unresolved": 2,
+        "quarantined": 0,
+        "staged": 0
+      }
+    },
+    {
+      "check": "retry-idempotency",
+      "passed": true
+    },
+    {
+      "check": "provenance-export",
+      "passed": true
+    },
+    {
+      "check": "cross-origin-write-blocked",
+      "passed": true
+    },
+    {
+      "check": "csv-export-125-rows-and-exact-cents",
+      "passed": true
+    }
+  ],
+  "demo": {
+    "runId": "IR-DF2519E5",
+    "summary": {
+      "counts": {
+        "source": 128,
+        "repaired": 125,
+        "unresolved": 0,
+        "quarantined": 3,
+        "staged": 125
+      },
+      "sourceCents": 2735412,
+      "stagedCents": 2609808,
+      "heldCents": 125604,
+      "readyCents": 0,
+      "heldRows": 3,
+      "unknownAmounts": 0,
+      "safeTotals": true,
+      "deltaCents": 0,
+      "rowDelta": 0,
+      "balanced": true,
+      "complete": true
+    }
+  }
+}
