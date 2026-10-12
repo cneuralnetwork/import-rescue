@@ -90,4 +90,4 @@ node scripts/smoke.mjs
 
 The engine suite covers exact decimals, ambiguous units, duplicate decisions, invalid dates/values/currencies, retained extra fields, unsupported operations, CSV parsing, the restricted worker, SQLite idempotency, drift retraction/resume, and partial-header preservation. API evidence is in [`docs/evidence/api-smoke.json`](docs/evidence/api-smoke.json). The screenshot above shows the workbench reconciliation result; the landing page at `/` was added afterward.
 
-See [hackathon.md](hackathon.md) for the dated build log and remaining submission steps, and [docs/design-review.md](docs/design-review.md) for the design-law review.
+See [hackathon.md](hackathon.md) for the dated build log and remaining submission steps, and [docs/design-review.md](docs/design-review.md) for the workbench design review completed before the landing page was added.

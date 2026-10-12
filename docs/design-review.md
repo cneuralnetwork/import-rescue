@@ -1,6 +1,6 @@
 # Design-law review
 
-Reviewed 11 October 2026 against every named point in the user-supplied law. The supplied [Claude design-system reference](https://claude.ai/artifact/CK2SMZybvsZ88j4zwifunW) takes precedence where it explicitly specifies paper colors, typography, table borders, semantic status colors, and compact components. This is a functioning data workbench, not a landing page. Optional premium techniques are evaluated for fit, not accumulated.
+The point-by-point table below records the **workbench review from 11 October 2026**. It predates the landing page added on 12 October. Statements such as "no landing page" describe the workbench scope, not the current repository as a whole. The supplied [Claude design-system reference](https://claude.ai/artifact/CK2SMZybvsZ88j4zwifunW) takes precedence where it explicitly specifies paper colors, typography, table borders, semantic status colors, and compact components. Optional premium techniques are evaluated for fit, not accumulated.
 
 Changes from this review: contained narrow-screen table overflow; improved mobile type/touch sizes; added keyboard tab navigation/current-page semantics; aligned receipt comparisons; preserved visible-by-default content; checked light/dark outcomes and real interactions. Browser evidence and exact demo totals are in the build log.
 
