@@ -155,8 +155,8 @@ export function LiveLedger() {
           {phase !== "idle" && phase !== "scan1" && (
             <motion.div
               className="seam-body"
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ y: -6 }}
+              animate={{ y: 0 }}
               transition={{ delay: 0.15, duration: 0.4 }}
             >
               <span className="seam-label mono">

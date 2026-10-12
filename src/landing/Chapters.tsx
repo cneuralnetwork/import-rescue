@@ -297,9 +297,9 @@ export function Chapters() {
           <AnimatePresence mode="wait">
             <motion.div
               key={active}
-              initial={{ opacity: 0, y: 14, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
+              initial={{ y: 14 }}
+              animate={{ y: 0 }}
+              exit={{ y: -10 }}
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             >
               {chapters[active].art}
