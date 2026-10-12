@@ -1,10 +1,21 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import type { Plan, Row, Rule, Run, Status, Workspace } from "./types";
+import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import type { Plan, Rule, Run, Status, Workspace } from "./types";
+import {
+  Icon,
+  Mark,
+  Tag,
+  ThemeButton,
+  Ticker,
+  fmt,
+  glyph,
+  go,
+  money,
+  useTheme,
+} from "./ui";
+import "./workbench.css";
 
-const fmt = (n: number) => n.toLocaleString("en-US");
-const money = (n: number) =>
-  (n / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 const time = (s: string) =>
   new Date(s).toLocaleTimeString("en-GB", {
     hour: "2-digit",
@@ -20,105 +31,16 @@ const operationLabel: Record<string, string> = {
   iso_date: "Validate ISO date",
   uppercase: "Normalize currency",
 };
-const glyph: Record<Status, string> = {
-  Repaired: "●",
-  Unresolved: "◆",
-  Quarantined: "×",
-  Reconciled: "✓",
-};
-function Tag({ status, children }: { status: Status; children?: ReactNode }) {
-  return (
-    <span className={`status ${status.toLowerCase()}`}>
-      <span aria-hidden="true">{glyph[status]}</span>
-      {children || status}
-    </span>
-  );
-}
-function Mark() {
-  return (
-    <svg
-      width="29"
-      height="29"
-      viewBox="0 0 32 32"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12 5H5v22h7M20 5h7v22h-7M11 16l4 4 8-9" />
-    </svg>
-  );
-}
-function Icon({ name }: { name: string }) {
-  const paths: Record<string, ReactNode> = {
-    imports: (
-      <>
-        <path d="M3 5h14M3 10h8M3 15h8M14 12v6m-3-3 3 3 3-3" />
-      </>
-    ),
-    schema: (
-      <>
-        <path d="M3 3h5v5H3zM12 12h5v5h-5zM5.5 8v6.5H12M8 5.5h6.5V12" />
-      </>
-    ),
-    staging: (
-      <>
-        <ellipse cx="10" cy="4.5" rx="7" ry="2.5" />
-        <path d="M3 4.5v11c0 3.3 14 3.3 14 0v-11M3 10c0 3.3 14 3.3 14 0" />
-      </>
-    ),
-    receipt: (
-      <>
-        <path d="M5 2h10v16l-2-1-3 1-3-1-2 1V2ZM8 6h4M8 10h4" />
-      </>
-    ),
-    search: (
-      <>
-        <circle cx="8.5" cy="8.5" r="5.5" />
-        <path d="m13 13 4 4" />
-      </>
-    ),
-    plus: <path d="M10 4v12M4 10h12" />,
-    arrow: <path d="M4 10h12m-5-5 5 5-5 5" />,
-    upload: (
-      <>
-        <path d="M10 13V3m-4 4 4-4 4 4M3 12v5h14v-5" />
-      </>
-    ),
-    download: (
-      <>
-        <path d="M10 3v10m-4-4 4 4 4-4M3 13v4h14v-4" />
-      </>
-    ),
-    play: <path d="m6 3 10 7-10 7V3Z" />,
-    settings: (
-      <>
-        <path d="M3 5h14M3 15h14" />
-        <circle cx="7" cy="5" r="2" fill="var(--paper)" />
-        <circle cx="13" cy="15" r="2" fill="var(--paper)" />
-      </>
-    ),
-    close: <path d="m5 5 10 10M15 5 5 15" />,
-    back: <path d="m12 4-6 6 6 6" />,
-    check: <path d="m4 10 4 4 8-9" />,
-  };
-  return (
-    <svg
-      className="icon"
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {paths[name] || paths.receipt}
-    </svg>
-  );
-}
+const TABS = [
+  "Data preview",
+  "Mapping",
+  "Decisions",
+  "Reconciliation",
+  "Activity",
+] as const;
+const tabLabel: Record<string, string> = { Activity: "Audit trail" };
+const PAGE = 10;
+
 async function api<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(
     `/api${path}`,
@@ -135,7 +57,7 @@ async function api<T>(path: string, body?: unknown): Promise<T> {
   return data;
 }
 
-export default function App() {
+export default function Workbench() {
   const [workspace, setWorkspace] = useState<Workspace | null>(null),
     [run, setRun] = useState<Run | null>(null);
   const [view, setView] = useState("Imports"),
@@ -148,13 +70,10 @@ export default function App() {
     [busy, setBusy] = useState(""),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem("ir-theme") || "light",
-  );
+  const [theme, toggleTheme] = useTheme();
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem("ir-theme", theme);
-  }, [theme]);
+    document.title = "Import Rescue · The import ledger";
+  }, []);
   async function refresh(id?: string) {
     const w = await api<Workspace>("/workspace");
     setWorkspace(w);
@@ -169,6 +88,24 @@ export default function App() {
     const id = setTimeout(() => setNotice(""), 4500);
     return () => clearTimeout(id);
   }, [notice]);
+  // "N" opens a new import from anywhere outside a text field.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (
+        e.key.toLowerCase() !== "n" ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.altKey ||
+        t.closest("input, textarea, select, [contenteditable], [role=dialog]")
+      )
+        return;
+      e.preventDefault();
+      setUpload(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   async function act(
     label: string,
     path: string,
@@ -221,7 +158,9 @@ export default function App() {
     ) || [];
   useEffect(
     () =>
-      setPage((p) => Math.min(p, Math.max(0, Math.ceil(rows.length / 8) - 1))),
+      setPage((p) =>
+        Math.min(p, Math.max(0, Math.ceil(rows.length / PAGE) - 1)),
+      ),
     [rows.length],
   );
   const selectedRow = run?.rows.find((r) => r.number === selected);
@@ -230,65 +169,76 @@ export default function App() {
     run?.rows.filter(
       (r) => r.status === "Repaired" && !stagedNumbers.has(r.number),
     ).length || 0;
+  const seams = new Map(
+    run?.plans.filter((p) => p.id > 1).map((p) => [p.startsAt, p.id]),
+  );
+  const nav: [string, string, string][] = [
+    ["Imports", "imports", "Imports"],
+    ["Destination schema", "schema", "Schema"],
+    ["Staging database", "staging", "Staging"],
+    ["Integrations", "settings", "Integrations"],
+  ];
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <a
           className="brand"
-          href="#"
+          href="/app"
           onClick={(e) => {
             e.preventDefault();
             navigate("Imports");
           }}
         >
-          <Mark />
-          <span>
-            Import Rescue
-            <span className="brand-caption">The import ledger</span>
-          </span>
+          <Mark size={24} />
+          <span>Import Rescue</span>
         </a>
         <div className="workspace-name">
-          <span className="workspace-monogram">IS</span>
+          <span className="workspace-monogram" aria-hidden="true">
+            IS
+          </span>
           <div>
             ISeeData<span>Local workspace</span>
           </div>
-          <span
-            className="local-mark"
-            title="Data stays in the local workspace"
-          >
-            ⌁
-          </span>
         </div>
         <nav aria-label="Main navigation">
-          {[
-            ["Imports", "imports"],
-            ["Destination schema", "schema"],
-            ["Staging database", "staging"],
-            ["Integrations", "settings"],
-          ].map(([label, icon]) => (
-            <button
-              key={label}
-              aria-label={
-                label === "Imports"
-                  ? `Imports ${workspace?.runs.length || 0}`
-                  : label
-              }
-              aria-current={view === label ? "page" : undefined}
-              className={`nav-item ${view === label ? "active" : ""}`}
-              onClick={() => navigate(label)}
-            >
-              <Icon name={icon} />
-              {label}
-              {label === "Imports" && (
-                <span className="nav-count">{workspace?.runs.length || 0}</span>
-              )}
-            </button>
-          ))}
+          <LayoutGroup id="nav">
+            {nav.map(([label, icon, short]) => (
+              <button
+                key={label}
+                aria-label={
+                  label === "Imports"
+                    ? `Imports ${workspace?.runs.length || 0}`
+                    : label
+                }
+                aria-current={view === label ? "page" : undefined}
+                className={`nav-item ${view === label ? "active" : ""}`}
+                onClick={() => navigate(label)}
+              >
+                {view === label && (
+                  <motion.span
+                    layoutId="nav-active"
+                    className="nav-active"
+                    transition={{ type: "spring", stiffness: 520, damping: 40 }}
+                  />
+                )}
+                <Icon name={icon} />
+                <span className="nav-label">{label}</span>
+                <span className="nav-short" aria-hidden="true">
+                  {short}
+                </span>
+                {label === "Imports" && (
+                  <span className="nav-count">
+                    {workspace?.runs.length || 0}
+                  </span>
+                )}
+              </button>
+            ))}
+          </LayoutGroup>
         </nav>
         <div className="sidebar-recents">
           <h2>Recent imports</h2>
-          {workspace?.runs.slice(0, 4).map((r) => (
+          {workspace?.runs.slice(0, 5).map((r) => (
             <button
               key={r.id}
               className={`recent ${run?.id === r.id ? "chosen" : ""}`}
@@ -296,9 +246,8 @@ export default function App() {
             >
               <span
                 className={`tiny-state ${r.summary.counts.unresolved ? "unresolved" : "repaired"}`}
-              >
-                {r.summary.counts.unresolved ? "◆" : "●"}
-              </span>
+                aria-hidden="true"
+              />
               <span>
                 {r.name}
                 <small>
@@ -310,65 +259,62 @@ export default function App() {
           ))}
         </div>
         <div className="sidebar-bottom">
-          <div className="safety-note">
-            <Icon name="check" />
-            <span>
-              Originals stay original.
-              <br />
-              <span>Every change has a receipt.</span>
-            </span>
-          </div>
-          <button
-            className="theme-button"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          >
-            <span className="theme-swatch" />
-            {theme === "light"
-              ? "Switch to dark paper"
-              : "Switch to light paper"}
-          </button>
-          <div className="team-footer">
-            <span>ISeeData</span>
-            <span>neatHack 2026</span>
+          <p className="safety-note">
+            Originals stay original. Every change has a receipt.
+          </p>
+          <div className="sidebar-tools">
+            <ThemeButton theme={theme} toggle={toggleTheme} />
+            <a
+              className="about-link"
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                go("/");
+              }}
+            >
+              About
+            </a>
           </div>
         </div>
       </aside>
       <div className="workspace-main">
         <header className="topbar">
           <div className="breadcrumb">
-            <span>Workspace</span>
-            <span>/</span>
+            <span>ISeeData</span>
+            <span aria-hidden="true">/</span>
             <strong>{view}</strong>
           </div>
           <div className="topbar-actions">
-            <span className="local-indicator">Local staging</span>
+            <span className="local-indicator">
+              <span aria-hidden="true" />
+              Local staging
+            </span>
+            <ThemeButton theme={theme} toggle={toggleTheme} compact />
             <button
               className="button primary small"
               onClick={() => setUpload(true)}
+              aria-keyshortcuts="N"
             >
               <Icon name="plus" />
               New import
+              <kbd>N</kbd>
             </button>
           </div>
         </header>
         <main>
           {error && (
             <div role="alert" className="error-banner">
-              <strong>Could not complete the operation.</strong> {error}
+              <span>
+                <strong>Could not complete the operation.</strong> {error}
+              </span>
               <button aria-label="Dismiss error" onClick={() => setError("")}>
                 <Icon name="close" />
               </button>
             </div>
           )}
-          {notice && (
-            <div className="toast" role="status">
-              <Icon name="check" />
-              {notice}
-            </div>
-          )}
           {!run || !workspace ? (
             <div className="empty">
-              <Mark />
+              <Mark size={36} />
               <h1>{error ? "Workspace unavailable" : "Opening the ledger"}</h1>
               <p>
                 {error
@@ -385,7 +331,15 @@ export default function App() {
               )}
             </div>
           ) : (
-            <>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={view}
+                className="view"
+                initial={{ opacity: 0.4, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0.4, y: -4 }}
+                transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              >
               {view === "Imports" && (
                 <>
                   <div className="page-heading">
@@ -394,7 +348,7 @@ export default function App() {
                       <p>Broken imports, repaired with receipts.</p>
                     </div>
                     <button
-                      className="button text-button"
+                      className="button"
                       disabled={!!busy}
                       onClick={() =>
                         act(
@@ -413,22 +367,22 @@ export default function App() {
                     className="import-context"
                     aria-label="Current import"
                   >
-                    <div className="file-mark">
-                      <Icon name="receipt" />
-                    </div>
                     <div className="file-title">
-                      <h2>{run.name}</h2>
-                      <span>
-                        {run.id}
-                        <span className="middle-dot">·</span>
-                        {run.demo ? "Synthetic supplier data" : "Uploaded CSV"}
-                        <span className="middle-dot">·</span>
-                        {new Date(run.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </span>
+                      <Icon name="receipt" />
+                      <div>
+                        <h2>{run.name}</h2>
+                        <span>
+                          <code>{run.id}</code>
+                          <span className="middle-dot">·</span>
+                          {run.demo ? "Synthetic supplier data" : "Uploaded CSV"}
+                          <span className="middle-dot">·</span>
+                          {new Date(run.createdAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
                     </div>
                     <div className="destination">
                       <span>Destination</span>
@@ -438,34 +392,45 @@ export default function App() {
                       </strong>
                     </div>
                   </section>
-                  {run.phase === "before-drift" && (
-                    <div className="demo-callout">
-                      <div>
-                        <strong>
-                          Batch 1 is in staging. Change the format mid-run.
-                        </strong>
-                        <p>
-                          Batch 2 renames columns and switches dollars to cents.
-                          It also exposes duplicate keys.
-                        </p>
-                      </div>
-                      <button
-                        className="button primary"
-                        disabled={!!busy}
-                        onClick={() =>
-                          act(
-                            "Detecting schema change",
-                            `/runs/${run.id}/drift`,
-                            {},
-                            "Schema drift detected. Mapping repaired and conflicting rows held.",
-                          )
-                        }
+                  <AnimatePresence initial={false}>
+                    {run.phase === "before-drift" && (
+                      <motion.div
+                        className="demo-callout"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                       >
-                        Change supplier format
-                        <Icon name="arrow" />
-                      </button>
-                    </div>
-                  )}
+                        <div className="demo-callout-inner">
+                          <span className="callout-step mono">Step 2 of 3</span>
+                          <div>
+                            <strong>
+                              Batch 1 is in staging. Change the format mid-run.
+                            </strong>
+                            <p>
+                              Batch 2 renames columns and switches dollars to
+                              cents. It also exposes duplicate keys.
+                            </p>
+                          </div>
+                          <button
+                            className="button primary"
+                            disabled={!!busy}
+                            onClick={() =>
+                              act(
+                                "Detecting schema change",
+                                `/runs/${run.id}/drift`,
+                                {},
+                                "Schema drift detected. Mapping repaired and conflicting rows held.",
+                              )
+                            }
+                          >
+                            Change supplier format
+                            <Icon name="arrow" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                   <section className="metrics" aria-label="Import totals">
                     {[
                       ["Source rows", c!.source, "source", "All rows"],
@@ -479,23 +444,26 @@ export default function App() {
                       ],
                     ].map(([label, value, kind, f]) => (
                       <button
-                        className={`metric ${kind}`}
+                        className={`metric ${kind} ${filter === f && tab === "Data preview" ? "selected" : ""}`}
                         key={label}
                         onClick={() => {
                           setFilter(String(f));
                           setTab("Data preview");
                         }}
                         aria-label={`Filter ${label}`}
+                        aria-pressed={filter === f && tab === "Data preview"}
                       >
                         <span className="metric-label">
                           {kind !== "source" && (
-                            <span aria-hidden="true">
+                            <span aria-hidden="true" className="metric-glyph">
                               {glyph[label as Status]}
                             </span>
                           )}
                           {label}
                         </span>
-                        <strong>{fmt(Number(value))}</strong>
+                        <strong>
+                          <Ticker value={Number(value)} />
+                        </strong>
                         <span className="metric-explain">
                           {kind === "source"
                             ? "Every source row retained"
@@ -514,20 +482,32 @@ export default function App() {
                   >
                     <div className="row-map-top">
                       <span>
-                        <strong>One square. One source row.</strong> Select any
-                        row to see its receipt.
+                        <strong>One square, one source row.</strong> Select any
+                        square to open its receipt.
                       </span>
-                      <span className="mono">
+                      <span className="row-map-legend" aria-hidden="true">
+                        <i className="map-cell repaired staged" /> Staged
+                        <i className="map-cell repaired" /> Ready
+                        <i className="map-cell unresolved" /> Decision
+                        <i className="map-cell quarantined" /> Quarantined
+                      </span>
+                      <span className="mono row-map-count">
                         {fmt(c!.source)} / {fmt(c!.source)} accounted for
                       </span>
                     </div>
                     <div className="row-map-cells">
-                      {run.rows.slice(0, 256).map((r) => (
+                      {run.rows.slice(0, 256).map((r, index) => (
                         <button
                           key={r.number}
-                          title={`Row ${r.number}: ${r.status}`}
+                          title={`Row ${r.number}: ${r.status}${stagedNumbers.has(r.number) ? ", staged" : ""}`}
                           aria-label={`Inspect row ${r.number}, ${r.status}`}
-                          className={`map-cell ${r.status.toLowerCase()} ${stagedNumbers.has(r.number) ? "staged" : ""}`}
+                          data-seam={
+                            seams.has(r.number)
+                              ? `v${seams.get(r.number)}`
+                              : undefined
+                          }
+                          style={{ transitionDelay: `${index * 2}ms` }}
+                          className={`map-cell ${r.status.toLowerCase()} ${stagedNumbers.has(r.number) ? "staged" : ""} ${seams.has(r.number) ? "seam" : ""} ${selected === r.number ? "current" : ""}`}
                           onClick={() => setSelected(r.number)}
                         />
                       ))}
@@ -541,95 +521,113 @@ export default function App() {
                   </section>
                   <div className="workbench-grid">
                     <div className="workbench">
-                      {c!.unresolved > 0 && (
-                        <div className="decision-banner">
-                          <span className="decision-symbol">◆</span>
-                          <div>
-                            <strong>
-                              {fmt(c!.unresolved)} rows need a human decision.
-                            </strong>
-                            <span>
-                              Ambiguity stays visible. Nothing gets silently
-                              fixed.
-                            </span>
-                          </div>
-                          <button
-                            className="inline-action"
-                            onClick={() => {
-                              setFilter("Unresolved");
-                              setTab("Decisions");
-                            }}
+                      <AnimatePresence initial={false}>
+                        {c!.unresolved > 0 && tab !== "Decisions" && (
+                          <motion.div
+                            className="decision-banner"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.25 }}
                           >
-                            Review decisions <Icon name="arrow" />
-                          </button>
-                        </div>
-                      )}
+                            <div className="decision-banner-inner">
+                              <span className="decision-symbol" aria-hidden="true">
+                                ◆
+                              </span>
+                              <div>
+                                <strong>
+                                  {fmt(c!.unresolved)} rows need a human
+                                  decision.
+                                </strong>
+                                <span>
+                                  Ambiguity stays visible. Nothing gets silently
+                                  fixed.
+                                </span>
+                              </div>
+                              <button
+                                className="inline-action"
+                                onClick={() => {
+                                  setFilter("Unresolved");
+                                  setTab("Decisions");
+                                }}
+                              >
+                                Review decisions <Icon name="arrow" />
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                       <div
                         className="tabs"
                         role="tablist"
                         aria-label="Import details"
                       >
-                        {[
-                          "Data preview",
-                          "Mapping",
-                          "Decisions",
-                          "Reconciliation",
-                        ].map((t) => (
-                          <button
-                            role="tab"
-                            id={`tab-${t.replaceAll(" ", "-")}`}
-                            aria-controls="import-detail-panel"
-                            tabIndex={tab === t ? 0 : -1}
-                            aria-selected={tab === t}
-                            onKeyDown={(e) => {
-                              const names = [
-                                "Data preview",
-                                "Mapping",
-                                "Decisions",
-                                "Reconciliation",
-                              ];
-                              const index = names.indexOf(t);
-                              const next =
-                                e.key === "ArrowRight"
-                                  ? (index + 1) % 4
-                                  : e.key === "ArrowLeft"
-                                    ? (index + 3) % 4
-                                    : e.key === "Home"
-                                      ? 0
-                                      : e.key === "End"
-                                        ? 3
-                                        : null;
-                              if (next !== null) {
-                                e.preventDefault();
-                                setTab(names[next]);
-                                e.currentTarget.parentElement
-                                  ?.querySelectorAll<HTMLButtonElement>(
-                                    '[role="tab"]',
-                                  )
-                                  [next]?.focus();
-                              }
-                            }}
-                            key={t}
-                            onClick={() => setTab(t)}
-                            className={tab === t ? "active" : ""}
-                          >
-                            {t}
-                            {t === "Decisions" && c!.unresolved > 0 && (
-                              <span>{c!.unresolved}</span>
-                            )}
-                          </button>
-                        ))}
+                        <LayoutGroup id="tabs">
+                          {TABS.map((t, index) => (
+                            <button
+                              role="tab"
+                              id={`tab-${t.replaceAll(" ", "-")}`}
+                              aria-controls="import-detail-panel"
+                              tabIndex={tab === t ? 0 : -1}
+                              aria-selected={tab === t}
+                              onKeyDown={(e) => {
+                                const n = TABS.length;
+                                const next =
+                                  e.key === "ArrowRight"
+                                    ? (index + 1) % n
+                                    : e.key === "ArrowLeft"
+                                      ? (index + n - 1) % n
+                                      : e.key === "Home"
+                                        ? 0
+                                        : e.key === "End"
+                                          ? n - 1
+                                          : null;
+                                if (next !== null) {
+                                  e.preventDefault();
+                                  setTab(TABS[next]);
+                                  e.currentTarget.parentElement
+                                    ?.querySelectorAll<HTMLButtonElement>(
+                                      '[role="tab"]',
+                                    )
+                                    [next]?.focus();
+                                }
+                              }}
+                              key={t}
+                              onClick={() => setTab(t)}
+                              className={tab === t ? "active" : ""}
+                            >
+                              {tabLabel[t] || t}
+                              {t === "Decisions" && c!.unresolved > 0 && (
+                                <span className="tab-count">
+                                  {c!.unresolved}
+                                </span>
+                              )}
+                              {tab === t && (
+                                <motion.span
+                                  layoutId="tab-active"
+                                  className="tab-indicator"
+                                  transition={{
+                                    type: "spring",
+                                    stiffness: 500,
+                                    damping: 38,
+                                  }}
+                                />
+                              )}
+                            </button>
+                          ))}
+                        </LayoutGroup>
                       </div>
                       <div
                         role="tabpanel"
                         id="import-detail-panel"
-                        aria-label={tab}
+                        aria-labelledby={`tab-${tab.replaceAll(" ", "-")}`}
                         tabIndex={0}
+                        className="tab-panel"
                       >
                         {tab === "Data preview" && (
                           <section className="table-panel">
                             <div className="table-toolbar">
-                              <div className="filters">
+                              <div className="filters" role="group" aria-label="Filter rows">
                                 {[
                                   "All rows",
                                   "Repaired",
@@ -639,6 +637,7 @@ export default function App() {
                                   <button
                                     key={f}
                                     className={filter === f ? "selected" : ""}
+                                    aria-pressed={filter === f}
                                     onClick={() => setFilter(f)}
                                   >
                                     {f}
@@ -649,7 +648,7 @@ export default function App() {
                                 <Icon name="search" />
                                 <input
                                   aria-label="Search rows"
-                                  placeholder="Find a value…"
+                                  placeholder="Find a value or row number…"
                                   value={search}
                                   onChange={(e) => setSearch(e.target.value)}
                                 />
@@ -672,15 +671,32 @@ export default function App() {
                                 </thead>
                                 <tbody>
                                   {rows
-                                    .slice(page * 8, page * 8 + 8)
+                                    .slice(page * PAGE, page * PAGE + PAGE)
                                     .map((row) => {
                                       const price = row.provenance.find(
                                         (p) => p.field === "price_cents",
                                       )!;
                                       return (
-                                        <tr key={row.number}>
+                                        <tr
+                                          key={row.number}
+                                          className="clickable"
+                                          onClick={(e) => {
+                                            if (
+                                              !(e.target as HTMLElement).closest(
+                                                "button",
+                                              )
+                                            )
+                                              setSelected(row.number);
+                                          }}
+                                        >
                                           <td className="numeric row-number">
                                             {row.number}
+                                            {stagedNumbers.has(row.number) && (
+                                              <span
+                                                className="staged-dot"
+                                                title="In staging"
+                                              />
+                                            )}
                                           </td>
                                           <td>
                                             {row.value.order_id || (
@@ -756,7 +772,7 @@ export default function App() {
                             <div className="table-footer">
                               <span>
                                 {rows.length
-                                  ? `${fmt(page * 8 + 1)}–${fmt(Math.min(page * 8 + 8, rows.length))} of ${fmt(rows.length)} rows`
+                                  ? `${fmt(page * PAGE + 1)}–${fmt(Math.min(page * PAGE + PAGE, rows.length))} of ${fmt(rows.length)} rows`
                                   : "0 rows"}
                                 <span className="middle-dot">·</span>Changed
                                 values include their source
@@ -769,13 +785,13 @@ export default function App() {
                                 >
                                   <Icon name="back" />
                                 </button>
-                                <span>
+                                <span className="mono">
                                   {page + 1} /{" "}
-                                  {Math.max(1, Math.ceil(rows.length / 8))}
+                                  {Math.max(1, Math.ceil(rows.length / PAGE))}
                                 </span>
                                 <button
                                   aria-label="Next page"
-                                  disabled={(page + 1) * 8 >= rows.length}
+                                  disabled={(page + 1) * PAGE >= rows.length}
                                   onClick={() => setPage((p) => p + 1)}
                                 >
                                   <Icon name="arrow" />
@@ -799,10 +815,37 @@ export default function App() {
                         {tab === "Reconciliation" && (
                           <Reconciliation run={run} />
                         )}
+                        {tab === "Activity" && (
+                          <section className="audit-panel">
+                            <div className="section-intro">
+                              <h2>Audit trail</h2>
+                              <p>
+                                Actual operations, recorded in order. All
+                                timestamps are local.
+                              </p>
+                            </div>
+                            <ol className="audit-list">
+                              {run.events.map((e) => (
+                                <li key={e.id} className={e.kind}>
+                                  <time className="mono">{time(e.time)}</time>
+                                  <span className="audit-glyph" aria-hidden="true">
+                                    {e.kind === "decision" ? "◆" : "✓"}
+                                  </span>
+                                  <div>
+                                    <strong>{e.title}</strong>
+                                    <p>{e.detail}</p>
+                                  </div>
+                                </li>
+                              ))}
+                            </ol>
+                          </section>
+                        )}
                       </div>
                       <div className="commit-bar">
                         <div>
-                          <strong>{fmt(ready)} rows ready for staging</strong>
+                          <strong>
+                            <Ticker value={ready} /> rows ready for staging
+                          </strong>
                           <span>
                             {fmt(c!.unresolved + c!.quarantined)} held
                             separately · Originals preserved
@@ -828,10 +871,10 @@ export default function App() {
                         </button>
                       </div>
                     </div>
-                    <aside className="receipt-rail">
+                    <aside className="receipt-rail" aria-label="Run receipt">
                       <div className="rail-title">
                         <h2>Run receipt</h2>
-                        <Icon name="receipt" />
+                        <span className="mono">{run.id.slice(0, 12)}</span>
                       </div>
                       <dl>
                         <div>
@@ -860,7 +903,9 @@ export default function App() {
                       </dl>
                       <div className="rail-total">
                         <span>Staged amount</span>
-                        <strong>{money(run.summary.stagedCents)}</strong>
+                        <strong>
+                          <Ticker value={run.summary.stagedCents} format={money} />
+                        </strong>
                         <span>
                           {run.summary.unknownAmounts
                             ? `${run.summary.unknownAmounts} source amounts need review`
@@ -878,13 +923,14 @@ export default function App() {
                             <div className="activity-mini" key={e.id}>
                               <span
                                 className={`activity-glyph ${e.kind === "decision" ? "amber-text" : ""}`}
+                                aria-hidden="true"
                               >
                                 {e.kind === "decision" ? "◆" : "✓"}
                               </span>
                               <div>
                                 <strong>{e.title}</strong>
                                 <p>{e.detail}</p>
-                                <time>{time(e.time)}</time>
+                                <time className="mono">{time(e.time)}</time>
                               </div>
                             </div>
                           ))}
@@ -912,24 +958,6 @@ export default function App() {
                       </a>
                     </aside>
                   </div>
-                  {tab === "Activity" && (
-                    <section className="audit-panel">
-                      <h2>Audit trail</h2>
-                      <p>
-                        Actual operations, recorded in order. All timestamps are
-                        local.
-                      </p>
-                      <div className="audit-list">
-                        {run.events.map((e) => (
-                          <div key={e.id}>
-                            <time>{time(e.time)}</time>
-                            <strong>{e.title}</strong>
-                            <p>{e.detail}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  )}
                   <footer className="page-footer">
                     <span>Every changed value has provenance.</span>
                     <span>
@@ -950,7 +978,7 @@ export default function App() {
                         it.
                       </p>
                     </div>
-                    <span className="mono">supplier_orders</span>
+                    <span className="mono heading-meta">supplier_orders</span>
                   </div>
                   <section className="panel">
                     <div className="panel-heading">
@@ -970,10 +998,18 @@ export default function App() {
                         <tbody>
                           {workspace.schema.map((f) => (
                             <tr key={f.name}>
-                              <td>{f.name}</td>
-                              <td>{f.type}</td>
+                              <td>
+                                <code>{f.name}</code>
+                              </td>
+                              <td>
+                                <code className="type">{f.type}</code>
+                              </td>
                               <td>{f.description}</td>
-                              <td>Yes</td>
+                              <td>
+                                <span className="required">
+                                  <Icon name="check" /> Yes
+                                </span>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -982,6 +1018,9 @@ export default function App() {
                   </section>
                   <div className="info-columns">
                     <section>
+                      <span className="info-glyph amber-text" aria-hidden="true">
+                        ◆
+                      </span>
                       <h2>Duplicates require context.</h2>
                       <p>
                         The same order, SKU, and date may be a legitimate
@@ -990,6 +1029,9 @@ export default function App() {
                       </p>
                     </section>
                     <section>
+                      <span className="info-glyph rust-text" aria-hidden="true">
+                        ×
+                      </span>
                       <h2>No silent conversions.</h2>
                       <p>
                         Undeclared monetary units, ambiguous dates, and
@@ -1020,14 +1062,18 @@ export default function App() {
                     </a>
                   </div>
                   <div className="stage-summary">
-                    <strong>
-                      {fmt(c!.staged)}
-                      <span>staged rows</span>
-                    </strong>
-                    <strong>
-                      {money(run.summary.stagedCents)}
-                      <span>extended amount · USD</span>
-                    </strong>
+                    <div>
+                      <span>Staged rows</span>
+                      <strong>
+                        <Ticker value={c!.staged} />
+                      </strong>
+                    </div>
+                    <div>
+                      <span>Extended amount · USD</span>
+                      <strong>
+                        <Ticker value={run.summary.stagedCents} format={money} />
+                      </strong>
+                    </div>
                     <div>
                       <span className="mono">{run.id}</span>
                       <p>{run.name}</p>
@@ -1047,18 +1093,29 @@ export default function App() {
                               "currency",
                               "ordered_at",
                             ].map((h) => (
-                              <th key={h}>{h}</th>
+                              <th
+                                key={h}
+                                className={
+                                  ["row", "quantity", "price_cents"].includes(h)
+                                    ? "numeric"
+                                    : ""
+                                }
+                              >
+                                {h}
+                              </th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {run.staged.map((r) => (
                             <tr key={r.row_number}>
-                              <td>{r.row_number}</td>
+                              <td className="numeric row-number">
+                                {r.row_number}
+                              </td>
                               <td>{r.order_id}</td>
                               <td>{r.sku}</td>
-                              <td>{r.quantity}</td>
-                              <td>{fmt(r.price_cents)}</td>
+                              <td className="numeric">{r.quantity}</td>
+                              <td className="numeric">{fmt(r.price_cents)}</td>
                               <td>{r.currency}</td>
                               <td>{r.ordered_at}</td>
                             </tr>
@@ -1092,10 +1149,24 @@ export default function App() {
                   busy={busy}
                 />
               )}
-            </>
+              </motion.div>
+            </AnimatePresence>
           )}
         </main>
       </div>
+      <nav className="mobile-nav" aria-label="Main navigation, compact">
+        {nav.map(([label, icon, short]) => (
+          <button
+            key={label}
+            aria-current={view === label ? "page" : undefined}
+            className={view === label ? "active" : ""}
+            onClick={() => navigate(label)}
+          >
+            <Icon name={icon} />
+            {short}
+          </button>
+        ))}
+      </nav>
       <Upload
         open={upload}
         close={() => setUpload(false)}
@@ -1144,17 +1215,24 @@ export default function App() {
         <Dialog.Portal>
           <Dialog.Overlay className="dialog-overlay" />
           <Dialog.Content className="drawer">
-            <Dialog.Title>Receipt for row {selectedRow?.number}</Dialog.Title>
-            <Dialog.Description>
-              Original values, applied rules, and the resulting record.
-            </Dialog.Description>
-            <Dialog.Close className="dialog-close" aria-label="Close receipt">
-              <Icon name="close" />
-            </Dialog.Close>
+            <div className="drawer-head">
+              <Dialog.Title>Receipt for row {selectedRow?.number}</Dialog.Title>
+              <Dialog.Description>
+                Original values, applied rules, and the resulting record.
+              </Dialog.Description>
+              <Dialog.Close className="dialog-close" aria-label="Close receipt">
+                <Icon name="close" />
+              </Dialog.Close>
+            </div>
             {selectedRow && (
-              <>
+              <div className="drawer-body">
                 <div className="drawer-meta">
                   <Tag status={selectedRow.status} />
+                  {stagedNumbers.has(selectedRow.number) && (
+                    <span className="drawer-staged">
+                      <Icon name="staging" /> In staging
+                    </span>
+                  )}
                   <span className="mono">
                     CSV record {selectedRow.sourceLine} · v{selectedRow.segment}
                   </span>
@@ -1170,8 +1248,11 @@ export default function App() {
                 )}
                 <div className="provenance-list">
                   {selectedRow.provenance.map((p) => (
-                    <div key={p.field} className="provenance-item">
-                      <div>
+                    <div
+                      key={p.field}
+                      className={`provenance-item ${p.changed ? "changed" : ""}`}
+                    >
+                      <div className="provenance-head">
                         <strong>{p.field}</strong>
                         <span className="mono">{p.rule}</span>
                       </div>
@@ -1226,20 +1307,47 @@ export default function App() {
                     Review this decision
                   </button>
                 )}
-              </>
+              </div>
             )}
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-      {busy && (
-        <div className="working-indicator" role="status">
-          <span className="working-track" />
-          {busy}
-        </div>
-      )}
+      <div className="toast-region" aria-live="polite">
+        <AnimatePresence>
+          {notice && (
+            <motion.div
+              key={notice}
+              className="toast"
+              role="status"
+              initial={{ opacity: 0, y: 16, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 420, damping: 32 }}
+            >
+              <Icon name="check" />
+              {notice}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+      <AnimatePresence>
+        {busy && (
+          <motion.div
+            className="working-indicator"
+            role="status"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            <span className="working-track" />
+            {busy}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
 
 type Act = (
   label: string,
@@ -1535,17 +1643,23 @@ function Reconciliation({ run }: { run: Run }) {
       <div className="reconcile-equation">
         <div>
           <span>Source rows</span>
-          <strong>{fmt(s.counts.source)}</strong>
+          <strong>
+            <Ticker value={s.counts.source} />
+          </strong>
         </div>
-        <span>=</span>
+        <i aria-hidden="true">=</i>
         <div>
           <span>Staged</span>
-          <strong>{fmt(s.counts.staged)}</strong>
+          <strong>
+            <Ticker value={s.counts.staged} />
+          </strong>
         </div>
-        <span>+</span>
+        <i aria-hidden="true">+</i>
         <div>
           <span>Held</span>
-          <strong>{fmt(s.heldRows)}</strong>
+          <strong className="held">
+            <Ticker value={s.heldRows} />
+          </strong>
         </div>
       </div>
       <div className="table-scroll">
@@ -1642,7 +1756,7 @@ function Integrations({
             </p>
             {run.traceId && <code>Latest trace: {run.traceId}</code>}
             <a href={i.neatlogsUrl} target="_blank" rel="noreferrer">
-              Open neatlogs dashboard ↗
+              Open neatlogs dashboard <Icon name="external" />
             </a>
           </div>
         </article>
@@ -1665,7 +1779,7 @@ function Integrations({
               target="_blank"
               rel="noreferrer"
             >
-              {i.entireUrl ? "View checkpoint" : "Open setup guide"} ↗
+              {i.entireUrl ? "View checkpoint" : "Open setup guide"} <Icon name="external" />
             </a>
           </div>
         </article>
@@ -1689,7 +1803,7 @@ function Integrations({
               target="_blank"
               rel="noreferrer"
             >
-              {i.cfoUrl ? "View business plan" : "Read business-plan draft"} ↗
+              {i.cfoUrl ? "View business plan" : "Read business-plan draft"} <Icon name="external" />
             </a>
           </div>
         </article>

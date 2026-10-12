@@ -1,8 +1,12 @@
 # Import Rescue
 
-Supplier CSVs change. Import Rescue inspects each schema, builds a constrained transformation plan, holds ambiguous records, and commits validated orders to SQLite staging. Every changed value has a receipt.
+**A supplier changes its CSV halfway through an import. Import Rescue catches the drift, repairs the mapping, and accounts for every source row before committing to staging.**
 
-Built by **ISeeData** for neatHack. Repository owner: **cneuralnetwork**.
+It keeps the original values, shows a receipt for each transformation, and stops when a decision needs a person. The bundled 128-record example finishes with **125 staged + 3 quarantined** and a **$0.00 reconciliation difference**. The example records are synthetic; the import, validation, SQLite writes, and reconciliation run locally.
+
+![Import ledger showing the reconciled 128-record example](docs/evidence/reconciliation.png)
+
+Built by **ISeeData** for neatHack. Source: [cneuralnetwork/import-rescue](https://github.com/cneuralnetwork/import-rescue).
 
 ## Run locally
 
@@ -14,7 +18,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Open http://localhost:4173. The local rules and all five scenarios work without an API key. Existing `.env` files must not be overwritten.
+Open [http://localhost:4173](http://localhost:4173) for the project walkthrough, then **Open the ledger** to use the workbench at `/app`. The local rules and all five scenarios work without an API key. If `.env` already exists, keep it and skip the copy command.
 
 For the production build:
 
@@ -23,7 +27,7 @@ npm run build
 npm start
 ```
 
-Data is persisted in `data/staging.sqlite`. Both `data/` and `.env` are ignored by Git. The server binds to loopback and is intended as a single-user local MVP, not an internet-facing deployment.
+Data is persisted in `data/staging.sqlite`. Both `data/` and `.env` are ignored by Git. The server binds to loopback and is intended as a single-user local MVP.
 
 ## Two-minute demo
 
@@ -58,7 +62,7 @@ Duplicate business keys (order, SKU, date) are held together. Keeping repeats re
 
 ## Integrations and current evidence
 
-- **neatlogs:** Official TypeScript SDK, workflow/tool traces, explicit span success/error status, and an Sarvam advisor via the OpenAI-compatible client. Hosted workflow/tool delivery was verified. Only operation names, run identifiers, and aggregate counts are emitted by the local workflow wrappers. Raw rows and credentials stay local.
+- **neatlogs:** Official TypeScript SDK, workflow/tool traces, explicit span success/error status, and a Sarvam advisor via the OpenAI-compatible client. Hosted workflow/tool delivery was verified during development. Only operation names, run identifiers, and aggregate counts are emitted by the local workflow wrappers. Raw rows and credentials stay local.
 - **Entire:** CLI installed and Codex hooks configured. Existing Codex history was imported as read-only local checkpoints. Normal live hook capture needs approval in Codex `/hooks`. Hosted checkpoint access still needs account/repository onboarding and verification.
 - **cfo.ai:** A complete local pricing, costs, revenue, and runway draft is in [docs/business-plan.md](docs/business-plan.md). Creating the actual cfo.ai plan still requires account access. The draft is not represented as cfo.ai output.
 - **Sarvam:** Optional advisor uses `sarvam-105b` at `https://api.sarvam.ai/v1`. Configure `SARVAM_API_KEY`; no OpenAI key is required. Live `sarvam-105b` review and hosted neatlogs delivery were verified with synthetic headers. Structured output and local schema validation constrain suggestions; unknown price units remain unresolved. It proposes mappings using headers only, with operator approval and the same deterministic validation. The default mode is honestly labeled **Local rule engine**.
@@ -84,6 +88,6 @@ npm run build
 node scripts/smoke.mjs
 ```
 
-The engine suite covers exact decimals, ambiguous units, duplicate decisions, invalid dates/values/currencies, retained extra fields, unsupported operations, CSV parsing, the restricted worker, SQLite idempotency, drift retraction/resume, and partial-header preservation. API evidence is in `docs/evidence/api-smoke.json`. Browser verification includes the complete demo, upload, mapping approvals, receipts, search/filter/page controls, keyboard tabs, and responsive overflow checks.
+The engine suite covers exact decimals, ambiguous units, duplicate decisions, invalid dates/values/currencies, retained extra fields, unsupported operations, CSV parsing, the restricted worker, SQLite idempotency, drift retraction/resume, and partial-header preservation. API evidence is in [`docs/evidence/api-smoke.json`](docs/evidence/api-smoke.json). The screenshot above shows the workbench reconciliation result; the landing page at `/` was added afterward.
 
 See [hackathon.md](hackathon.md) for the dated build log and remaining submission steps, and [docs/design-review.md](docs/design-review.md) for the design-law review.

@@ -1,0 +1,316 @@
+/* ------------------------------------------------------------------
+   Import Rescue design tokens, shared by the landing page and workbench.
+   Paper, ink and one deep ledger green. Status colours carry meaning:
+   green = repaired, amber = needs a decision, rust = quarantined,
+   blue = reconciled. They are never used as decoration.
+   ------------------------------------------------------------------ */
+:root {
+  --desk: #e9e7df;
+  --paper: #f5f4ee;
+  --raised: #fcfbf8;
+  --sunken: #ecebe3;
+  --line: #d9d6ca;
+  --line-soft: #e5e3d9;
+  --line-strong: #8a8678;
+  --ink: #161815;
+  --ink-2: #353832;
+  --muted: #5f625a;
+  --faint: #8b8e84;
+  --brand: #0d5446;
+  --brand-hover: #0a4539;
+  --brand-soft: #dae9e2;
+  --brand-line: #a9cbbd;
+  --on-brand: #fff;
+  --amber: #e9a817;
+  --amber-ink: #7a4d00;
+  --amber-soft: #fbefcf;
+  --quarantine: #b13d0c;
+  --quarantine-soft: #f8e2d7;
+  --verified: #1f5bb5;
+  --verified-soft: #dfe8f7;
+  --shadow-overlay: 0 24px 60px -20px rgb(28 30 24 / 0.28),
+    0 2px 6px rgb(28 30 24 / 0.06);
+  --sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --display: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --radius: 10px;
+  color-scheme: light;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--paper);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+:root[data-theme="dark"] {
+  --desk: #0a0b0a;
+  --paper: #111311;
+  --raised: #171a17;
+  --sunken: #0d0f0d;
+  --line: #272b26;
+  --line-soft: #1d201c;
+  --line-strong: #6b7066;
+  --ink: #ecebe4;
+  --ink-2: #cfcfc6;
+  --muted: #a2a59b;
+  --faint: #73776d;
+  --brand: #5cc2a6;
+  --brand-hover: #74d1b7;
+  --brand-soft: #14322a;
+  --brand-line: #24584a;
+  --on-brand: #08201a;
+  --amber: #f0b429;
+  --amber-ink: #f5c964;
+  --amber-soft: #352a0d;
+  --quarantine: #f08a5d;
+  --quarantine-soft: #3a1d12;
+  --verified: #86aef0;
+  --verified-soft: #172743;
+  --shadow-overlay: 0 24px 60px -16px rgb(0 0 0 / 0.6),
+    0 2px 6px rgb(0 0 0 / 0.3);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  transition: background-color 240ms var(--ease-out);
+}
+::selection {
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button,
+a,
+input,
+select,
+textarea,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  cursor: pointer;
+  border: 0;
+  background: none;
+  padding: 0;
+  transition:
+    background-color 140ms,
+    color 140ms,
+    border-color 140ms,
+    box-shadow 140ms;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+a {
+  color: var(--brand);
+  text-decoration: none;
+}
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+h1,
+h2,
+h3,
+h4,
+p,
+dl,
+dd,
+ol,
+ul {
+  margin: 0;
+}
+ol,
+ul {
+  padding: 0;
+  list-style: none;
+}
+p {
+  line-height: 1.6;
+}
+code,
+.mono {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  font-variant-numeric: tabular-nums;
+}
+.muted {
+  color: var(--muted);
+}
+.icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.ticker {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Buttons ---------------------------------------------------------- */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 15px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 550;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.button:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.button.primary {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--on-brand);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    0 1px 2px rgb(10 40 32 / 0.18);
+}
+.button.primary:hover:not(:disabled) {
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+  color: var(--on-brand);
+}
+.button .icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 220ms var(--ease-out);
+}
+.button:hover:not(:disabled) .icon:last-child:not(:first-child) {
+  transform: translateX(2px);
+}
+.button.small {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+.button.large {
+  height: 48px;
+  padding: 0 22px;
+  font-size: 15px;
+  border-radius: 11px;
+}
+.button.quiet {
+  background: transparent;
+}
+.button.full {
+  width: 100%;
+}
+
+/* Status tags ------------------------------------------------------- */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.status > span[aria-hidden] {
+  font-size: 10px;
+}
+.status.repaired {
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.status.unresolved {
+  background: var(--amber-soft);
+  color: var(--amber-ink);
+}
+.status.quarantined {
+  background: var(--quarantine-soft);
+  color: var(--quarantine);
+}
+.status.reconciled {
+  background: var(--verified-soft);
+  color: var(--verified);
+}
+
+/* Theme control: a split paper swatch, no sun and moon. */
+.theme-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.theme-button:hover {
+  color: var(--ink);
+  background: var(--sunken);
+}
+.theme-button.compact {
+  width: 32px;
+  padding: 0;
+  justify-content: center;
+}
+.theme-swatch {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: linear-gradient(135deg, #f5f4ee 50%, #111311 50%);
+  transition: transform 400ms var(--ease-out);
+}
+:root[data-theme="dark"] .theme-swatch {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
